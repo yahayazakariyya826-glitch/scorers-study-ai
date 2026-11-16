@@ -7,6 +7,9 @@ import { VisionWorkspace } from './components/VisionWorkspace';
 import { PromptGeneratorWorkspace } from './components/PromptGeneratorWorkspace';
 import { SettingsWorkspace } from './components/SettingsWorkspace';
 import { AuthModal } from './components/AuthModal';
+import { OfflineIndicator } from './components/OfflineIndicator';
+import { PWAInstallButton } from './components/PWAInstallButton';
+import { usePWAInstall } from './hooks/usePWAInstall';
 import {
   deleteStudySession,
   saveUserSettings,
@@ -26,6 +29,7 @@ import type {
 
 function StudyApp() {
   const { user, authReady, idToken, signOut } = useAuth();
+  const { isInstallable } = usePWAInstall();
 
   const [activeView, setActiveView] = useState<ActiveView>('chat');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -193,25 +197,28 @@ function StudyApp() {
             {mobileTitle}
           </span>
 
-          {user ? (
-            <button
-              type="button"
-              onClick={handleNewChat}
-              className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-[#6D28D9] hover:bg-[#F7F5FC] cursor-pointer shrink-0"
-              aria-label="New study chat"
-            >
-              <Plus className="w-5 h-5" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setAuthModalOpen(true)}
-              className="min-h-[44px] px-2.5 flex items-center justify-center gap-1 rounded-xl text-xs font-semibold text-[#6D28D9] hover:bg-[#F7F5FC] cursor-pointer shrink-0 whitespace-nowrap"
-            >
-              <LogIn className="w-4 h-4" />
-              <span>Sign In</span>
-            </button>
-          )}
+          <div className="flex items-center gap-1 shrink-0">
+            {isInstallable && <PWAInstallButton variant="compact" />}
+            {user ? (
+              <button
+                type="button"
+                onClick={handleNewChat}
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-[#6D28D9] hover:bg-[#F7F5FC] cursor-pointer shrink-0"
+                aria-label="New study chat"
+              >
+                <Plus className="w-5 h-5" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setAuthModalOpen(true)}
+                className="min-h-[44px] px-2.5 flex items-center justify-center gap-1 rounded-xl text-xs font-semibold text-[#6D28D9] hover:bg-[#F7F5FC] cursor-pointer shrink-0 whitespace-nowrap"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Sign In</span>
+              </button>
+            )}
+          </div>
         </header>
 
         {/* Unverified Email Notice (non-blocking) */}
@@ -305,6 +312,7 @@ function StudyApp() {
       </div>
 
       <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
+      <OfflineIndicator />
     </div>
   );
 }

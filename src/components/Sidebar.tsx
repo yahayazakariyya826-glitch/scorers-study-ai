@@ -11,6 +11,7 @@ import {
   X,
 } from 'lucide-react';
 import type { User } from 'firebase/auth';
+import { PWAInstallButton } from './PWAInstallButton';
 import type { ActiveView, StudySession } from '../types/study';
 
 interface SidebarProps {
@@ -231,8 +232,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* User Account Footer */}
-      <div className="p-3 border-t border-[#E9E5F5] bg-white">
+      {/* Install App & User Account Footer */}
+      <div className="p-3 border-t border-[#E9E5F5] bg-white space-y-2.5">
+        <PWAInstallButton variant="sidebar" />
         {user ? (
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2.5 min-w-0">

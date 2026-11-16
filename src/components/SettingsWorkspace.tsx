@@ -10,6 +10,7 @@ import {
   Save,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { PWAInstallButton } from './PWAInstallButton';
 import { saveUserSettings } from '../lib/firestoreStudy';
 import type { ExamFocus, ExplanationDepth, StudyLanguage, UserSettings } from '../types/study';
 
@@ -175,6 +176,19 @@ export const SettingsWorkspace: React.FC<SettingsWorkspaceProps> = ({
               <span>Account verified · Cloud history sync is active</span>
             </div>
           )}
+        </section>
+
+        {/* App Installation Card */}
+        <section className="rounded-2xl border border-[#E9E5F5] bg-[#FAF9FC] p-5 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 className="font-display text-base font-semibold text-[#18122B]">
+              Install Scorer&apos;s Study AI
+            </h2>
+            <p className="text-xs text-[#645C7A] mt-0.5">
+              Add Scorer&apos;s Study AI to your home screen for fast, full-screen access.
+            </p>
+          </div>
+          <PWAInstallButton variant="settings" />
         </section>
 
         {/* Study Preferences Form */}
