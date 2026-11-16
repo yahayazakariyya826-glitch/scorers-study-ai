@@ -1,0 +1,208 @@
+{
+  "entities": {
+    "UserSettings": {
+      "title": "UserSettings",
+      "description": "Private student study preferences and profile settings stored under the user's own document.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase Auth UID of the user."
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "Student display name."
+        },
+        "preferredLanguage": {
+          "type": "string",
+          "enum": ["english", "hausa", "bilingual"],
+          "description": "Preferred AI response language."
+        },
+        "examFocus": {
+          "type": "string",
+          "enum": ["general", "jamb", "waec", "university", "coding"],
+          "description": "Nigerian exam or study focus."
+        },
+        "explanationDepth": {
+          "type": "string",
+          "enum": ["concise", "step-by-step"],
+          "description": "Preferred level of explanation detail."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when settings were created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when settings were last updated."
+        }
+      },
+      "required": [
+        "uid",
+        "displayName",
+        "preferredLanguage",
+        "examFocus",
+        "explanationDepth",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "StudySession": {
+      "title": "StudySession",
+      "description": "A saved study chat, image-to-answer session, or prompt generator session.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Session document ID."
+        },
+        "userId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Owner Firebase Auth UID."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "description": "Short descriptive title of the study session."
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["chat", "vision", "prompt"],
+          "description": "Feature mode used in this session."
+        },
+        "language": {
+          "type": "string",
+          "enum": ["english", "hausa", "bilingual"],
+          "description": "Language setting for the session."
+        },
+        "examFocus": {
+          "type": "string",
+          "enum": ["general", "jamb", "waec", "university", "coding"],
+          "description": "Exam or curriculum context."
+        },
+        "lastMessagePreview": {
+          "type": "string",
+          "maxLength": 240,
+          "description": "Short preview of the latest message."
+        },
+        "messageCount": {
+          "type": "integer",
+          "description": "Total number of messages in this session."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when session was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when session was last updated."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "title",
+        "mode",
+        "language",
+        "examFocus",
+        "lastMessagePreview",
+        "messageCount",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "StudyMessage": {
+      "title": "StudyMessage",
+      "description": "Individual user or AI message inside a study session.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Message document ID."
+        },
+        "chatId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Parent session ID."
+        },
+        "userId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Owner Firebase Auth UID."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["user", "assistant"],
+          "description": "Message sender role."
+        },
+        "content": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32000,
+          "description": "Markdown text content of the message."
+        },
+        "language": {
+          "type": "string",
+          "enum": ["english", "hausa", "bilingual"],
+          "description": "Language of the message."
+        },
+        "hasAttachment": {
+          "type": "boolean",
+          "description": "Whether the user message included an uploaded image."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when message was created."
+        }
+      },
+      "required": [
+        "id",
+        "chatId",
+        "userId",
+        "role",
+        "content",
+        "language",
+        "hasAttachment",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserSettings" },
+      "description": "Private user study settings and profile preferences."
+    },
+    "/users/{userId}/chats/{chatId}": {
+      "schema": { "$ref": "#/entities/StudySession" },
+      "description": "Saved study chat, vision solve, and prompt generator sessions."
+    },
+    "/users/{userId}/chats/{chatId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/StudyMessage" },
+      "description": "Ordered messages belonging to a specific study session."
+    }
+  }
+}

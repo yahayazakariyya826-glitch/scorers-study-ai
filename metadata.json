@@ -1,0 +1,6 @@
+{
+  "name": "Scorer's Study AI",
+  "description": "Score Higher, Study Smarter — AI study companion for Nigerian students with English & Hausa tutoring, Image-to-Answer textbook solving, Lovable/Bolt Prompt Generation, and cloud study history.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

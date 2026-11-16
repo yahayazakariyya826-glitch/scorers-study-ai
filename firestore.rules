@@ -1,0 +1,249 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedOwner(userId) {
+      return isSignedIn()
+        && request.auth.uid == userId
+        && request.auth.token.email_verified == true;
+    }
+
+    function isOwnerRead(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidLanguage(lang) {
+      return lang in ['english', 'hausa', 'bilingual'];
+    }
+
+    function isValidExamFocus(focus) {
+      return focus in ['general', 'jamb', 'waec', 'university', 'coding'];
+    }
+
+    function isValidUserSettings(data, userId) {
+      return data.keys().hasAll([
+          'uid',
+          'displayName',
+          'preferredLanguage',
+          'examFocus',
+          'explanationDepth',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid',
+          'displayName',
+          'preferredLanguage',
+          'examFocus',
+          'explanationDepth',
+          'createdAt',
+          'updatedAt'
+        ])
+        && isValidId(data.uid)
+        && data.uid == userId
+        && data.displayName is string
+        && data.displayName.size() >= 1
+        && data.displayName.size() <= 100
+        && isValidLanguage(data.preferredLanguage)
+        && isValidExamFocus(data.examFocus)
+        && data.explanationDepth in ['concise', 'step-by-step']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidStudySession(data, userId, chatId) {
+      return data.keys().hasAll([
+          'id',
+          'userId',
+          'title',
+          'mode',
+          'language',
+          'examFocus',
+          'lastMessagePreview',
+          'messageCount',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id',
+          'userId',
+          'title',
+          'mode',
+          'language',
+          'examFocus',
+          'lastMessagePreview',
+          'messageCount',
+          'createdAt',
+          'updatedAt'
+        ])
+        && isValidId(data.id)
+        && data.id == chatId
+        && isValidId(data.userId)
+        && data.userId == userId
+        && data.title is string
+        && data.title.size() >= 1
+        && data.title.size() <= 160
+        && data.mode in ['chat', 'vision', 'prompt']
+        && isValidLanguage(data.language)
+        && isValidExamFocus(data.examFocus)
+        && data.lastMessagePreview is string
+        && data.lastMessagePreview.size() <= 240
+        && data.messageCount is int
+        && data.messageCount >= 0
+        && data.messageCount <= 1000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidStudyMessage(data, userId, chatId, messageId) {
+      return data.keys().hasAll([
+          'id',
+          'chatId',
+          'userId',
+          'role',
+          'content',
+          'language',
+          'hasAttachment',
+          'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'id',
+          'chatId',
+          'userId',
+          'role',
+          'content',
+          'language',
+          'hasAttachment',
+          'createdAt'
+        ])
+        && isValidId(data.id)
+        && data.id == messageId
+        && isValidId(data.chatId)
+        && data.chatId == chatId
+        && isValidId(data.userId)
+        && data.userId == userId
+        && data.role in ['user', 'assistant']
+        && data.content is string
+        && data.content.size() >= 1
+        && data.content.size() <= 32000
+        && isValidLanguage(data.language)
+        && data.hasAttachment is bool
+        && data.createdAt is timestamp;
+    }
+
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isOwnerRead(userId);
+      allow list: if false;
+
+      allow create: if isValidId(userId)
+        && isVerifiedOwner(userId)
+        && isValidUserSettings(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isValidId(userId)
+        && isVerifiedOwner(userId)
+        && isValidUserSettings(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'displayName',
+          'preferredLanguage',
+          'examFocus',
+          'explanationDepth',
+          'updatedAt'
+        ]);
+
+      allow delete: if false;
+
+      match /chats/{chatId} {
+        allow get: if isValidId(userId)
+          && isValidId(chatId)
+          && isOwnerRead(userId);
+
+        allow list: if isOwnerRead(userId)
+          && resource.data.userId == request.auth.uid;
+
+        allow create: if isValidId(userId)
+          && isValidId(chatId)
+          && isVerifiedOwner(userId)
+          && isValidStudySession(incoming(), userId, chatId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+
+        allow update: if isValidId(userId)
+          && isValidId(chatId)
+          && isVerifiedOwner(userId)
+          && isValidStudySession(incoming(), userId, chatId)
+          && incoming().id == existing().id
+          && incoming().userId == existing().userId
+          && incoming().mode == existing().mode
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && (
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'title',
+              'lastMessagePreview',
+              'messageCount',
+              'language',
+              'examFocus',
+              'updatedAt'
+            ])
+          );
+
+        allow delete: if isValidId(userId)
+          && isValidId(chatId)
+          && isVerifiedOwner(userId);
+
+        match /messages/{messageId} {
+          allow get: if isValidId(userId)
+            && isValidId(chatId)
+            && isValidId(messageId)
+            && isOwnerRead(userId);
+
+          allow list: if isOwnerRead(userId)
+            && resource.data.userId == request.auth.uid
+            && resource.data.chatId == chatId;
+
+          allow create: if isValidId(userId)
+            && isValidId(chatId)
+            && isValidId(messageId)
+            && isVerifiedOwner(userId)
+            && isValidStudyMessage(incoming(), userId, chatId, messageId)
+            && incoming().createdAt == request.time
+            && existsAfter(/databases/$(database)/documents/users/$(userId)/chats/$(chatId));
+
+          allow update: if false;
+
+          allow delete: if isValidId(userId)
+            && isValidId(chatId)
+            && isValidId(messageId)
+            && isVerifiedOwner(userId);
+        }
+      }
+    }
+  }
+}
